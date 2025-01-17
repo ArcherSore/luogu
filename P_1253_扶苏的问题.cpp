@@ -1,109 +1,173 @@
-#include <iostream>
+#include <bits/stdc++.h>
 
 using namespace std;
 
 using LL = long long;
-using PII = pair<int, int>;
 
-const int N = 1e6 + 10; // 
-const LL INF = 1e18; // 表示没有全变为x
+template<class Info, class Tag>
+struct LazySegmentTree {
+    int n;
+    vector<Info> info;
+    vector<Tag> tag;
+    LazySegmentTree() : n(0) {}
+    LazySegmentTree(int n_, Info v_ = Info()) {
+        init(n_, v_);
+    }
+    template<class T>
+    LazySegmentTree(vector<T> init_) {
+        init(init_);
+    }
+    void init(int n_, Info v_ = Info()) {
+        init(vector(n_, v_));
+    }
+    template<class T>
+    void init(vector<T> init_) {
+        n = init_.size();
+        info.assign(4 << __lg(n), Info());
+        tag.assign(4 << __lg(n), Tag());
+        function<void(int, int, int)> build = [&](int p, int l, int r) {
+            if (r - l == 1) {
+                info[p] = init_[l];
+                return;
+            }
+            int m = (l + r) / 2;
+            build(2 * p, l, m);
+            build(2 * p + 1, m, r);
+            pull(p);
+        };
+        build(1, 0, n);
+    }
+    void pull(int p) {
+        info[p] = info[2 * p] + info[2 * p + 1];
+    }
+    void apply(int p, const Tag &v) {
+        info[p].apply(v);
+        tag[p].apply(v);
+    }
+    void push(int p) {
+        apply(2 * p, tag[p]);
+        apply(2 * p + 1, tag[p]);
+        tag[p] = Tag();
+    }
+    void modify(int p, int l, int r, int x, const Info &v) {
+        if (r - l == 1) {
+            info[p] = v;
+            return;
+        }
+        int m = (l + r) / 2;
+        push(p);
+        if (x < m) {
+            modify(2 * p, l, m, x, v);
+        } else {
+            modify(2 * p + 1, m, r, x, v);
+        }
+        pull(p);
+    }
+    void modify(int p, const Info &v) {
+        modify(1, 0, n, p, v);
+    }
+    Info rangeQuery(int p, int l, int r, int x, int y) {
+        if (l >= y || r <= x) {
+            return Info();
+        }
+        if (l >= x && r <= y) {
+            return info[p];
+        }
+        int m = (l + r) / 2;
+        push(p);
+        return rangeQuery(2 * p, l, m, x, y) + rangeQuery(2 * p + 1, m, r, x, y);
+    }
+    Info rangeQuery(int l, int r) {
+        return rangeQuery(1, 0, n, l, r);
+    }
+    void rangeApply(int p, int l, int r, int x, int y, const Tag &v) {
+        if (l >= y || r <= x) {
+            return;
+        }
+        if (l >= x && r <= y) {
+            apply(p, v);
+            return;
+        }
+        int m = (l + r) / 2;
+        push(p);
+        rangeApply(2 * p, l, m, x, y, v);
+        rangeApply(2 * p + 1, m, r, x, y, v);
+        pull(p);
+    }
+    void rangeApply(int l, int r, const Tag &v) {
+        return rangeApply(1, 0, n, l, r, v);
+    }
+};
 
-int n, q;
-int w[N];
-struct Node {
-    int l, r;
-    LL max, change, add;
-} tr[4 * N];
+struct Tag {
+    LL add, change;
+    bool update;
+    void apply(const Tag &t) & {
+        if (t.update) {
+            update = true;
+            change = t.change;
+            add = t.add;
+        } else {
+            if (update) {
+                change += t.add;
+            } else {
+                add += t.add;
+            }
+        }
+    }
+};
 
-void pushup(int u) {
-    tr[u].max = max(tr[2 * u].max, tr[2 * u + 1].max);
-}
+const LL INF = 1e18;
 
-void exec(Node &u, LL change, LL add) {
-    if (change != INF) {
-        u.add = 0;
-        u.change = change;
-        u.max = change;
-    }
-    if (add) {
-        u.add += add;
-        u.max += add;
-    }
-}
+struct Info {
+    LL mx;
 
-void pushdown(int u) {
-    exec(tr[2 * u], tr[u].change, tr[u].add);
-    exec(tr[2 * u + 1], tr[u].change, tr[u].add);
-    tr[u].change = INF, tr[u].add = 0;
-}
+    Info() : mx(-INF) {}
+    Info(LL x) : mx(x) {}
 
-void build(int u, int l, int r) {
-    if (l == r) {
-        tr[u] = {l, r, w[l], INF, 0};
-        return;
+    void apply(const Tag &t) & {
+        if (t.update) {
+            mx = t.change + t.add;
+        } else {
+            mx += t.add;
+        }
     }
-    tr[u] = {l, r, -INF, INF, 0};
-    int mid = l + r >> 1;
-    build(2 * u, l, mid);
-    build(2 * u + 1, mid + 1, r);
-    pushup(u);
-} // ok
+};
 
-void modify(int u, int l, int r, LL change, LL add) {
-    if (tr[u].l >= l && tr[u].r <= r) {
-        exec(tr[u], change, add);
-        return;
-    }
-    pushdown(u);
-    int mid = tr[u].l + tr[u].r >> 1;
-    if (l <= mid) {
-        modify(2 * u, l, r, change, add);
-    }
-    if (r > mid) {
-        modify(2 * u + 1, l, r, change, add);
-    }
-    pushup(u);
-}
-
-LL query(int u, int l, int r) {
-    if (tr[u].l >= l && tr[u].r <= r) {
-        return tr[u].max;
-    }
-    pushdown(u);
-    LL sum = -INF;
-    int mid = tr[u].l + tr[u].r >> 1;
-    if (l <= mid) {
-        sum = max(sum, query(2 * u, l, r));
-    }
-    if (r > mid) {
-        sum = max(sum, query(2 * u + 1, l, r));
-    }
-    return sum;
+Info operator+(const Info &a, const Info &b) {
+    Info c;
+    c.mx = max(a.mx, b.mx);
+    return c;
 }
 
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
+    cout.tie(nullptr);
     
+    int n, q;
     cin >> n >> q;
-    for (int i = 1; i <= n; i++) {
-        cin >> w[i];
+    vector<LL> v(n);
+    for (int i = 0; i < n; i++) {
+        cin >> v[i];
     }
-    build(1, 1, n);
+    LazySegmentTree<Info, Tag> seg(v);
 
     while (q--) {
-        int opt, l, r, x;
-        cin >> opt >> l >> r;
-        if (opt == 1) {
+        int op, l, r;
+        cin >> op >> l >> r;
+        l--, r--;
+        if (op == 1) {
+            LL x;
             cin >> x;
-            modify(1, l, r, x, 0); // 全变x
-        } else if (opt == 2) {
+            seg.rangeApply(l, r + 1, {0, x, true});
+        } else if (op == 2) {
+            LL x;
             cin >> x;
-            modify(1, l, r, INF, x); // 全加x
+            seg.rangeApply(l, r + 1, {x, 0, false});
         } else {
-            cout << query(1, l, r) << '\n';
+            cout << seg.rangeQuery(l, r + 1).mx << '\n';
         }
     }
-
     return 0;
 }
