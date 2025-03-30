@@ -1,26 +1,35 @@
-#include <bits/stdc++.h>
+// #pragma GCC optimize("O3,unroll-loops")
+// #pragma GCC target("avx2,bmi,bmi2,lzcnt,popcnt")
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <numeric>
+#include <stack>
+#include <set>
+#include <map>
+
 using namespace std;
 
-const int MAXN = 30005;
-int n, a[MAXN];
-long long f[MAXN][4];
+using LL = long long;
+using PII = pair<int, int>;
+
+void solve() {
+    
+}
 
 int main() {
-    cin >> n;
-    for (int i = 1; i <= n; i++) {
-        cin >> a[i];
-        f[i][1] = 1;
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T = 1;
+    cin >> T;
+
+    while (T--) {
+        solve();
     }
-    long long ans = 0;
-    for (int i = 1; i <= n; i++) {
-        for (int j = 1; j < i; j++) {
-            if (a[j] >= a[i])
-                continue;
-            f[i][2] += f[j][1];
-            f[i][3] += f[j][2];
-        }
-        ans += f[i][3];
-    }
-    cout << ans << endl;
+
     return 0;
 }
