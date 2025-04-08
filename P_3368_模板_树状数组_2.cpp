@@ -1,5 +1,9 @@
-# include <bits/stdc++.h>
+#include <bits/stdc++.h>
+
 using namespace std;
+
+using LL = long long;
+using PII = pair<int, int>;
 
 struct BIT {
     int n;
@@ -34,18 +38,25 @@ int main() {
 
     int n, m;
     cin >> n >> m;
+    vector<int> v(n);
+    for (int i = 0; i < n; i++) {
+        cin >> v[i];
+    }
     BIT fw(n);
-    for (int i = 0, x; i < n; i++) {
-        cin >> x;
-        fw.add(i, x);
+    fw.add(0, v[0]);
+    for (int i = 1; i < n; i++) {
+        fw.add(i, v[i] - v[i - 1]);
     }
     while (m--) {
-        int opt, x, y;
-        cin >> opt >> x >> y;
+        int opt, x, y, k;
+        cin >> opt >> x;
         if (opt == 1) {
-            fw.add(x - 1, y);
+            cin >> y >> k;
+            x--, y--;
+            fw.add(x, k);
+            fw.add(y + 1, -k);
         } else {
-            cout << fw.sum(x - 1, y) << '\n';
+            cout << fw.query(x) << '\n';
         }
     }
 

@@ -1,74 +1,61 @@
-#include <iostream>
-#include <vector>
-#include <cstring>
-#include <algorithm>
-#include <queue>
-#include <cmath>
-#include <numeric>
-#include <stack>
-#include <set>
-#include <map>
+#include <bits/stdc++.h>
 
 using namespace std;
 
 using LL = long long;
 using PII = pair<int, int>;
 
-const int MAXN = 5e5 + 10;
-int tr[MAXN];
-
-int n;
-
-int lowbit(int x) {
-    return x & -x;
-}
-
-void add(int x, int c) {
-    for (int i = x; i <= n; i += lowbit(i)) {
-        tr[i] += c;
+struct BIT {
+    int n;
+    vector<LL> a;
+    BIT(int _n) {
+        init(_n);
     }
-}
-
-int ask(int x) {
-    int sum = 0;
-    for (int i = x; i; i -= lowbit(i)) {
-        sum += tr[i];
+    void init(int _n) {
+        n = _n;
+        a.assign(n, 0);
     }
-    return sum;
-}
-
-void solve() {
-    cin >> n;
-    vector<int> a(n + 1), x(n + 1);
-    for (int i = 1; i <= n; i++) {
-        cin >> a[i];
-        x[i] = a[i];
+    void add(int x, int v) {
+        for (int i = x + 1; i <= n; i += i & -i) {
+            a[i - 1] += v;
+        }
     }
-    sort(x.begin() + 1, x.end());
-    unique(x.begin() + 1, x.end());
-    for (int i = 1; i <= n; i++) {
-        a[i] = lower_bound(x.begin() + 1, x.end(), a[i]) - x.begin();
+    LL query(int x) {
+        LL res = 0;
+        for (int i = x; i > 0; i -= i & -i) {
+            res += a[i - 1];
+        }
+        return res;
     }
-
-    LL ans = 0;
-    for (int i = 1; i <= n; i++) {
-        ans += (ask(n) - ask(a[i]));
-        add(a[i], 1);
+    LL sum(int l, int r) {
+        return query(r) - query(l);
     }
-
-    cout << ans << '\n';
-}
+};
 
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    int T = 1;
-    // cin >> T;
-
-    while (T--) {
-        solve();
+    int n;
+    cin >> n;
+    vector<int> a(n);
+    for (auto &x : a) {
+        cin >> x;
+    }
+    vector<int> b = a;
+    sort(b.begin(), b.end());
+    b.erase(unique(b.begin(), b.end()), b.end());
+    for (int i = 0; i < n; i++) {
+        a[i] = lower_bound(b.begin(), b.end(), a[i]) - b.begin();
     }
 
+    LL res = 0;
+    BIT fw(n);
+    for (int i = n - 1; i >= 0; i--) {
+        res += fw.query(a[i]);
+        fw.add(a[i], 1);
+    }
+    cout << res << '\n';
+    
     return 0;
 }
