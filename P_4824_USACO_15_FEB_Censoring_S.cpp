@@ -19,25 +19,36 @@ vector<int> kmp(string &s) {
 }
 
 void solve() {
-    string s1, s2;
-    cin >> s1 >> s2;
-    int n = s1.size(), m = s2.size();
-    vector<int> f = kmp(s2);
+    string s, t;
+    cin >> s >> t;
+    int n = s.size(), m = t.size();
+    vector<int> f = kmp(t);
+    stack<PII> st;
     for (int i = 0, j = 0; i < n; i++) {
-        while (j && s1[i] != s2[j]) {
+        while (j && s[i] != t[j]) {
             j = f[j];
         }
-        if (s1[i] == s2[j]) {
+        if (s[i] == t[j]) {
+            st.push({i, j});
             j++;
+        } else {
+            st.push({i, -1});
         }
         if (j == m) {
-            cout << i - m + 2 << '\n';
-            j = f[j];
+            int c = m;
+            while (c--) {
+                st.pop();
+            }
+            j = (st.empty() ? 0 : st.top().second + 1);
         }
     }
-    for (int i = 1; i <= m; i++) {
-        cout << f[i] << ' ';
+    string res;
+    while (!st.empty()) {
+        res.push_back(s[st.top().first]);
+        st.pop();
     }
+    reverse(res.begin(), res.end());
+    cout << res << '\n';
 }
 
 int main() {
