@@ -129,7 +129,7 @@ Info operator+(const Info &a, const Info &b) {
 
 const int N = 1e5;
 vector<int> father(N), siz(N), depth(N), son(N, -1);
-vector<int> top(N), dfn(N), seg(n);
+vector<int> top(N), dfn(N), seg(N);
 int cntd = 0;
 vector<vector<int>> adj(N);
 int n, m, r;
